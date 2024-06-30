@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- 设置文档字符编码为 UTF-8 -->
+    <meta charset="UTF-8">
+    <!-- 设置视口宽度为设备宽度，初始缩放比例为1.0 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 设置网页描述 -->
+    <meta name="description" content="Free PDF to Images Converter - Convert PDF files to images easily and for free.">
+    <!-- 设置网页关键词 -->
+    <meta name="keywords"
+        content="PDF to Images Converter, PDF to Images, Convert PDF to Images, Free PDF Converter, PDF Converter">
+    <!-- 设置网页作者 -->
+    <meta name="author" content="bruce wang">
+    <!-- 设置搜索引擎机器人的索引方式 -->
+    <meta name="robots" content="index, follow">
+    <!-- 设置 Google 搜索引擎机器人的索引方式 -->
+    <meta name="googlebot" content="index, follow">
+    <!-- 禁止 Google 翻译此网页 -->
+    <meta name="google" content="notranslate">
+    <!-- 设置 Open Graph 协议的标题、描述、图片、URL 和类型 -->
+    <meta property="og:title" content="Free PDF to Images Converter">
+    <meta property="og:description" content="Convert PDF files to images easily and for free.">
+    <meta property="og:image" content="https://example.com/images/pdf-to-images.png">
+    <meta property="og:url" content="https://example.com/pdf-to-images">
+    <meta property="og:type" content="website">
+    <!-- Google 网站验证 -->
+    <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE">
+    <!-- 百度网站验证 -->
+    <meta name="baidu-site-verification" content="YOUR_BAIDU_VERIFICATION_CODE">
+    <!-- 设置网站名称 -->
+    <meta property="og:site_name" content="Free PDF to Images Converter">
+    <!-- 设置网页语言和国家 -->
+    <meta property="og:locale" content="en_US">
+    <!-- 设置 Twitter 卡片的类型、标题、描述、图片和URL -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Free PDF to Images Converter">
+    <meta property="twitter:description" content="Convert PDF files to images easily and for free.">
+    <meta property="twitter:image" content="https://example.com/images/pdf-to-images.png">
+    <meta property="twitter:url" content="https://example.com/pdf-to-images">
+    <!-- 设置网页的规范URL -->
+    <link rel="canonical" href="https://example.com/pdf-to-images">
+    <!-- 设置网页标题 -->
+    <title>Free PDF to Images Converter</title>
+    <!-- 引入 pdf.js 库 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <!-- 设置网页样式 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+        }
+
+        #pdfContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+        }
+
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .download-all {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="pageTitle">Free PDF to Images Converter</h1>
+    <input type="file" id="fileInput" accept=".pdf" multiple>
+    <button id="convertButton">Convert to Images</button>
+    <div id="pdfContainer"></div>
+    <div class="download-all">
+        <button id="downloadButton">Download All Images</button>
+    </div>
+
+    <script>
+        let imagesData = [];
+        let lang = navigator.language || navigator.userLanguage; // 获取用户语言环境
+
+        // 根据用户语言环境加载相应的翻译文件
+        let translations = {
+            'en': {
+                'pageTitle': 'Free PDF to Images Converter',
+                'convertButton': 'Convert to Images',
+                'downloadButton': 'Download All Images'
+            },
+            'zh-CN': {
+                'pageTitle': '免费的PDF转图片',
+                'convertButton': '转换为图片',
+                'downloadButton': '下载所有图片'
+            },
+            // 添加其他语言的翻译
+        };
+
+        // 更新页面内容为用户语言环境对应的翻译
+        function updateTranslations() {
+            let translation = translations[lang] || translations['en']; // 默认为英文
+            debugger
+            for (let key in translation) {
+                document.getElementById(key).innerText = translation[key];
+            }
+        }
+
+        // 更新页面内容
+        updateTranslations();
+
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            imagesData = [];
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file) {
+                    const fileReader = new FileReader();
+                    fileReader.onload = function () {
+                        const typedArray = new Uint8Array(this.result);
+                        renderPDF(typedArray);
+                    };
+                    fileReader.readAsArrayBuffer(file);
+                }
+            }
+        });
+
+        async function renderPDF(data) {
+            const loadingTask = pdfjsLib.getDocument({ data });
+            const pdfDocument = await loadingTask.promise;
+            for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                const page = await pdfDocument.getPage(pageNum);
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+                await renderTask.promise;
+                document.getElementById('pdfContainer').appendChild(canvas);
+                imagesData.push(canvas.toDataURL('image/png'));
+            }
+        }
+
+        document.getElementById('convertButton').addEventListener('click', function () {
+            // Clear existing images
+            document.getElementById('pdfContainer').innerHTML = '';
+
+            imagesData.forEach((dataUrl, index) => {
+                const img = new Image();
+                img.src = dataUrl;
+                img.alt = 'Page ' + (index + 1);
+                document.getElementById('pdfContainer').appendChild(img);
+            });
+        });
+
+        document.getElementById('downloadButton').addEventListener('click', function () {
+            imagesData.forEach((dataUrl, index) => {
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'page' + (index + 1) + '.png';
+                link.click();
+            });
+        });
+    </script>
+</body>
+
+</html>
